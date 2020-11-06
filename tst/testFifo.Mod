@@ -5,7 +5,7 @@ IMPORT fifo, Platform, Out;
 VAR f: fifo.fifo;
     b: BOOLEAN;
 BEGIN
-
+(*fifo.setNonBlocking;*)
 f := fifo.Create("aoe");
 IF f # NIL THEN
   Out.String("fifo created!"); Out.Ln;

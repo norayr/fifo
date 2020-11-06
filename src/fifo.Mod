@@ -7,31 +7,43 @@ TYPE
         fd  : Platform.FileHandle;
       name- : ARRAY 32 OF CHAR
   END;
-
+(*
+PROCEDURE -inclSignal "#include <signal.h>";
+PROCEDURE -ignPipe "signal(SIGPIPE, SIG_IGN)";
+*)
 PROCEDURE -inclUnistd "#include <unistd.h>";
-PROCEDURE -mkfifo(VAR name: ARRAY OF CHAR): INTEGER
-  "(INTEGER)mkfifo (name, 0666)";
-PROCEDURE -unlink(VAR name: ARRAY OF CHAR): INTEGER
-  "(INTEGER)unlink (name)";
+PROCEDURE -mkfifo(VAR name: ARRAY OF CHAR): LONGINT
+  "(LONGINT)mkfifo (name, 0666)";
+PROCEDURE -unlink(VAR name: ARRAY OF CHAR): LONGINT
+  "(LONGINT)unlink (name)";
+(*PROCEDURE -inclFcntl "#include <fcntl.h>"; (* for nonblock *)
+PROCEDURE -opn(VAR name: ARRAY OF CHAR): LONGINT
+  "(LONGINT)open(name, O_RDWR | O_NONBLOCK)";
+*)
+PROCEDURE setNonBlocking*;
+BEGIN
+ (*ignPipe*)
+END setNonBlocking;
 
 PROCEDURE Create*(name: ARRAY OF CHAR): fifo;
 VAR
-  i: INTEGER;
+  i: LONGINT;
   f: fifo;
 BEGIN
   f := NIL;
   i := mkfifo(name); 
   IF i = 0 THEN
     NEW(f);
-    (*i := Platform.OldRW(name, f^.fd);*)
-    IF i = 0 THEN COPY(name, f^.name) ELSE f := NIL END;
+    i := Platform.OldRW(name, f^.fd);
+    (*f^.fd := opn(name);*)
+    COPY(name, f^.name);
   END;
   RETURN f;
 END Create;
 
 PROCEDURE Destroy*(VAR f: fifo): BOOLEAN;
 VAR
-  i : INTEGER;
+  i : LONGINT;
 BEGIN
   i := unlink(f^.name);
   IF i = 0 THEN
