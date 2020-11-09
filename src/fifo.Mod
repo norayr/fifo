@@ -4,7 +4,7 @@ IMPORT SYSTEM, Platform, Strings;
 TYPE
   fifo* = POINTER TO fifoDesc;
   fifoDesc* = RECORD
-        fd*  : Platform.FileHandle;
+        fd-  : Platform.FileHandle;
       name- : ARRAY 32 OF CHAR
   END;
 (*
@@ -27,13 +27,13 @@ PROCEDURE -getFlags(VAR fd: LONGINT): LONGINT
 PROCEDURE -setNonBlocking(VAR fd: LONGINT; flags: LONGINT): LONGINT
   "(LONGINT)fcntl( *fd, F_SETFL, flags| O_NONBLOCK)";
 
-PROCEDURE SetNonBlocking*(VAR fd: LONGINT): BOOLEAN;
+PROCEDURE SetNonBlocking*(VAR f: fifo): BOOLEAN;
 VAR
   currentFlags, res: LONGINT;
 BEGIN
-  currentFlags := getFlags(fd);
+  currentFlags := getFlags(f^.fd);
   IF currentFlags # -1 THEN
-    res := setNonBlocking(fd, currentFlags);
+    res := setNonBlocking(f^.fd, currentFlags);
     IF res = -1 THEN RETURN FALSE ELSE RETURN TRUE END;
   ELSE
     RETURN FALSE

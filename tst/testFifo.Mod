@@ -13,7 +13,7 @@ BEGIN
       (*  b := fifo.Write(f, "helloooo");
       IF b THEN Out.String("write succesful") ELSE Out.String("write failed") END;
       Out.Ln*)
-    IF fifo.SetNonBlocking(f^.fd) THEN
+    IF fifo.SetNonBlocking(f) THEN
       Out.String("set non blocking successfully")
     ELSE
       Out.String("failed set not blocking")
