@@ -4,7 +4,7 @@ IMPORT SYSTEM, Platform, Strings;
 TYPE
   fifo* = POINTER TO fifoDesc;
   fifoDesc* = RECORD
-        fd  : Platform.FileHandle;
+        fd*  : Platform.FileHandle;
       name- : ARRAY 32 OF CHAR
   END;
 (*
@@ -16,14 +16,34 @@ PROCEDURE -mkfifo(VAR name: ARRAY OF CHAR): LONGINT
   "(LONGINT)mkfifo (name, 0666)";
 PROCEDURE -unlink(VAR name: ARRAY OF CHAR): LONGINT
   "(LONGINT)unlink (name)";
-(*PROCEDURE -inclFcntl "#include <fcntl.h>"; (* for nonblock *)
+
+PROCEDURE -inclFcntl() "#include <fcntl.h>"; (* for O_NONBLOCK *)
+
+PROCEDURE -getFlags(VAR fd: LONGINT): LONGINT
+  "(LONGINT)fcntl( *fd, F_GETFL)";
+
+(* here be careful with the parentheses and the following asterisk, it is interpreted as an open comment by oberon parser *)
+
+PROCEDURE -setNonBlocking(VAR fd: LONGINT; flags: LONGINT): LONGINT
+  "(LONGINT)fcntl( *fd, F_SETFL, flags| O_NONBLOCK)";
+
+PROCEDURE SetNonBlocking*(VAR fd: LONGINT): BOOLEAN;
+VAR
+  currentFlags, res: LONGINT;
+BEGIN
+  currentFlags := getFlags(fd);
+  IF currentFlags # -1 THEN
+    res := setNonBlocking(fd, currentFlags);
+    IF res = -1 THEN RETURN FALSE ELSE RETURN TRUE END;
+  ELSE
+    RETURN FALSE
+  END;
+END SetNonBlocking;
+
+(*
 PROCEDURE -opn(VAR name: ARRAY OF CHAR): LONGINT
   "(LONGINT)open(name, O_RDWR | O_NONBLOCK)";
 *)
-PROCEDURE setNonBlocking*;
-BEGIN
- (*ignPipe*)
-END setNonBlocking;
 
 PROCEDURE Create*(name: ARRAY OF CHAR): fifo;
 VAR
@@ -74,14 +94,15 @@ END Write;
 PROCEDURE Read*(VAR f: fifo; VAR msg: ARRAY OF CHAR): BOOLEAN;
 VAR
   adr: SYSTEM.ADDRESS;
-  l, n: LONGINT;
+l, n: LONGINT;
   res: INTEGER;
 BEGIN
+  COPY("", msg);
   adr := SYSTEM.ADR(msg[0]);
   l := LEN(msg)-1;
   n := 0;
   res := Platform.Read(f^.fd, adr, l, n);
-  IF res >= 0 THEN RETURN TRUE ELSE RETURN FALSE END
+  IF (res = -1) OR (msg = "") THEN RETURN FALSE ELSE RETURN TRUE END
 END Read;
 
 END fifo.
