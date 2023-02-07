@@ -7,10 +7,10 @@ current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 all:
 		mkdir -p $(BUILD)
 		cd $(BUILD) && \
-		voc -s \
+		$(VOC) -s \
 		$(mkfile_dir_path)/src/fifo.Mod
 		cd $(BUILD) && \
-		voc $(mkfile_dir_path)/tst/testFifo.Mod -m
+		$(VOC) $(mkfile_dir_path)/tst/testFifo.Mod -m
 
 clean:
 		if [ -d "$(BUILD)" ]; then rm -rf $(BUILD); fi
