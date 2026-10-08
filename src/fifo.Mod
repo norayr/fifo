@@ -5,13 +5,14 @@ TYPE
   fifo* = POINTER TO fifoDesc;
   fifoDesc* = RECORD
         fd-  : Platform.FileHandle;
-      name- : ARRAY 32 OF CHAR
+      name- : ARRAY 256 OF CHAR
   END;
 (*
 PROCEDURE -inclSignal "#include <signal.h>";
 PROCEDURE -ignPipe "signal(SIGPIPE, SIG_IGN)";
 *)
 PROCEDURE -inclUnistd "#include <unistd.h>";
+PROCEDURE -inclStat "#include <sys/stat.h>";  (* mkfifo *)
 PROCEDURE -mkfifo(VAR name: ARRAY OF CHAR): LONGINT
   "(LONGINT)mkfifo (name, 0666)";
 PROCEDURE -unlink(VAR name: ARRAY OF CHAR): LONGINT
@@ -102,7 +103,9 @@ BEGIN
   l := LEN(msg)-1;
   n := 0;
   res := Platform.Read(f^.fd, adr, l, n);
-  IF (res = -1) OR (msg = "") THEN RETURN FALSE ELSE RETURN TRUE END
+  IF (res # 0) OR (n <= 0) THEN msg[0] := 0X; RETURN FALSE END;
+  msg[n] := 0X;  (* what was read, no more *)
+  RETURN TRUE
 END Read;
 
 END fifo.
